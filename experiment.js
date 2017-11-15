@@ -67,10 +67,12 @@ var getInstructFeedback = function() {
 	return '<div class = centerbox><p class = center-block-text>' + feedback_instruct_text +
 		'</p></div>'
 }
-
+var trial_ms    = 4000;
+var cue_ms      = 300;
+var fixation_ms = 400;
 var post_trial_gap = function() {
 	var curr_trial = jsPsych.progress().current_trial_global
-	return 3500 - jsPsych.data.getData()[curr_trial - 1].block_duration - jsPsych.data.getData()[curr_trial - 4].block_duration
+	return trial_ms - cue_ms - fixation_ms - jsPsych.data.getData()[curr_trial - 1].block_duration - jsPsych.data.getData()[curr_trial - 4].block_duration
 }
 
 var getInstructFeedback = function() {
@@ -142,7 +144,10 @@ var practice_block = jsPsych.randomization.repeat($.extend(true, [], test_stimul
 var block1_trials = jsPsych.randomization.repeat($.extend(true, [], test_stimuli), 1, true);
 var block2_trials = jsPsych.randomization.repeat($.extend(true, [], test_stimuli), 1, true);
 var block3_trials = jsPsych.randomization.repeat($.extend(true, [], test_stimuli), 1, true);
-var blocks = [block1_trials, block2_trials, block3_trials]
+var block4_trials = jsPsych.randomization.repeat($.extend(true, [], test_stimuli), 1, true);
+var block5_trials = jsPsych.randomization.repeat($.extend(true, [], test_stimuli), 1, true);
+var block6_trials = jsPsych.randomization.repeat($.extend(true, [], test_stimuli), 1, true);
+var blocks = [block1_trials, block2_trials, block3_trials, block4_trials, block5_trials, block6_trials]
 
 
 /* ************************************ */
@@ -271,8 +276,8 @@ var fixation = {
 		trial_id: 'fixation'
 	},
 	timing_post_trial: 0,
-	timing_stim: 400,
-	timing_response: 400,
+	timing_stim: fixation_ms,
+	timing_response: fixation_ms,
 	on_finish: function() {
 		jsPsych.data.addDataToLastTrial({
 			exp_stage: exp_stage
@@ -290,8 +295,8 @@ var center_cue = {
 		trial_id: 'centercue'
 	},
 	timing_post_trial: 0,
-	timing_stim: 100,
-	timing_response: 100,
+	timing_stim: cue_ms	,
+	timing_response: cue_ms,
 	on_finish: function() {
 		jsPsych.data.addDataToLastTrial({
 			exp_stage: exp_stage
@@ -307,8 +312,8 @@ var center_left_cue = {
 		trial_id: 'centerleftcue'
 	},
 	timing_post_trial: 0,
-	timing_stim: 100,
-	timing_response: 100,
+	timing_stim: cue_ms,
+	timing_response: cue_ms,
 	on_finish: function() {
 		jsPsych.data.addDataToLastTrial({
 			exp_stage: exp_stage
@@ -324,8 +329,8 @@ var center_right_cue = {
 		trial_id: 'centerrightcue'
 	},
 	timing_post_trial: 0,
-	timing_stim: 100,
-	timing_response: 100,
+	timing_stim: cue_ms,
+	timing_response: cue_ms,
 	on_finish: function() {
 		jsPsych.data.addDataToLastTrial({
 			exp_stage: exp_stage
@@ -342,7 +347,7 @@ var trial_num = 0
 var block = practice_block
 for (i = 0; i < block.data.length; i++) {
 	var trial_num = trial_num + 1
-	var first_fixation_gap = Math.floor(Math.random() * 1200) + 400;
+	var first_fixation_gap = Math.floor(Math.random() * 1200) + 400;  // min = 400, max = 1600
 	var first_fixation = {
 		type: 'poldrack-single-stim',
 		stimulus: '<div class=centerbox><div class=orienting_text>+</div></div>',
@@ -377,8 +382,8 @@ for (i = 0; i < block.data.length; i++) {
 				location: block.data[i].location,
 			},
 			timing_post_trial: 0,
-			timing_stim: 100,
-			timing_response: 100
+			timing_stim: cue_ms,
+			timing_response: cue_ms
 		}
 		attention_orienting_experiment.push(spatial_cue)
 	}
@@ -453,12 +458,12 @@ for (b = 0; b < blocks.length; b++) {
 		attention_orienting_experiment.push(first_fixation)
 
 		if (block.data[i].cue == 'center') {
-			attention_orienting_experiment.push(no_cue)
-		} else if (block.data[i].cue == 'centerleft') {
 			attention_orienting_experiment.push(center_cue)
-		} else if (block.data[i].cue == 'centeright') {
-			attention_orienting_experiment.push(double_cue)
-		} else {
+		} else if (block.data[i].cue == 'centerleft') {
+			attention_orienting_experiment.push(center_left_cue)
+		} else if (block.data[i].cue == 'centerright') {
+			attention_orienting_experiment.push(center_right_cue)
+		} else {	
 			var spatial_cue = {
 				type: 'poldrack-single-stim',
 				stimulus: '<div class = centerbox><div class=orienting_text>+</div></div><div class=centerbox><div class=orienting_' + block.data[i].location +
@@ -471,8 +476,8 @@ for (b = 0; b < blocks.length; b++) {
 					exp_stage: 'test',
 				},
 				timing_post_trial: 0,
-				timing_stim: 100,
-				timing_response: 100
+				timing_stim: cue_ms,
+				timing_response: cue_ms
 			}
 			attention_orienting_experiment.push(spatial_cue)
 		}
