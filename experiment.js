@@ -67,11 +67,13 @@ var getInstructFeedback = function() {
 	return '<div class = centerbox><p class = center-block-text>' + feedback_instruct_text +
 		'</p></div>'
 }
-var trial_ms    = 4000;
-var cue_ms      = 300;
-var fixation_ms = 400;
+var trial_ms        = 4000;
+var arrow_cue_ms    = 300;
+var asterisk_cue_ms = 100;
+var fixation_ms     = 400;
 var post_trial_gap = function() {
-	var curr_trial = jsPsych.progress().current_trial_global
+	var curr_trial = jsPsych.progress().current_trial_global;
+	var cue_ms = jsPsych.data.getData()[curr_trial-3].stim_duration;
 	return trial_ms - cue_ms - fixation_ms - jsPsych.data.getData()[curr_trial - 1].block_duration - jsPsych.data.getData()[curr_trial - 4].block_duration
 }
 
@@ -102,38 +104,41 @@ var test_stimuli = []
 var choices = { left: 37, right: 39} // 37 = left arrow, 39 = right arrow
 
 
-for (l = 0; l < locations.length; l++) {
-	var loc = locations[l]
-	for (ci = 0; ci < cues.length; ci++) {
-		var c = cues[ci];
-		var percent;
-		if (c == 'center') {
-			percent = 5;
-		} else if (c == 'centerleft' || c == 'spatialleft') {
-			if (loc == 'left') {
-				percent = 8
-			} else {
-				percent = 2
-			}
-		} else if (c == 'centerright' || c == 'spatialright') {
-			if (loc == 'right') {
-				percent = 8
-			} else {
-				percent = 2
-			}
-		}
+for (ci = 0; ci < cues.length; ci++) {
+	var c = cues[ci];
+	if (c == 'center' || c == 'spatialleft' || c == 'spatialright') {
+		right = 5;
+		left  = 5;
+	} else if (c == 'centerleft') {
+		left  = 8;
+		right = 2;
+	} else if (c == 'centerright') {
+		right = 8;
+		left  = 2;
+	}
+	for (i = 1; i <= right; i++) {
 		stim = {
-			stimulus: '<div class=centerbox><div class=orienting_text>+</div></div><div class=centerbox><div class=orienting_' + loc + '><div class=orienting_text>&#9632</div></div></div>',
+			stimulus: '<div class=centerbox><div class=orienting_text>+</div></div><div class=centerbox><div class=orienting_right><div class=orienting_text>&#9632</div></div></div>',
 			data: {
-				location: loc,
-				correct_response: choices[loc],
+				location: 'right',
+				correct_response: choices['right'],
 				cue: c, 
 				trial_id: 'stim'
 			}
 		}
-		for (i = 0; i < percent; i++) {
-			test_stimuli.push(stim)
+		test_stimuli.push(stim)
+	}
+	for (i = 1; i <= left; i++) {
+		stim = {
+			stimulus: '<div class=centerbox><div class=orienting_text>+</div></div><div class=centerbox><div class=orienting_left><div class=orienting_text>&#9632</div></div></div>',
+			data: {
+				location: 'left',
+				correct_response: choices['left'],
+				cue: c, 
+				trial_id: 'stim'
+			}
 		}
+		test_stimuli.push(stim)
 	}
 }
 
@@ -148,7 +153,6 @@ var block4_trials = jsPsych.randomization.repeat($.extend(true, [], test_stimuli
 var block5_trials = jsPsych.randomization.repeat($.extend(true, [], test_stimuli), 1, true);
 var block6_trials = jsPsych.randomization.repeat($.extend(true, [], test_stimuli), 1, true);
 var blocks = [block1_trials, block2_trials, block3_trials, block4_trials, block5_trials, block6_trials]
-
 
 /* ************************************ */
 /* Set up jsPsych blocks */
@@ -210,7 +214,7 @@ var end_block = {
 };
 
 var feedback_instruct_text =
-	'Welcome to the experiment. This experiment will take about 15 minutes. Press <strong>enter</strong> to begin.'
+	'Welcome to the experiment. This experiment will take about 30 minutes. Press <strong>enter</strong> to begin.'
 var feedback_instruct_block = {
 	type: 'poldrack-text',
 	cont_key: [13],
@@ -226,7 +230,8 @@ var instructions_block = {
 	type: 'poldrack-instructions',
 	pages: [
 		'<div class = centerbox><p class = block-text>In this experiment you will see a black square (&#9632) presented randomly towards the left or right of the screen.</p><p class=block-text>Your job is to indicate whether the square appears on the left or right by pressing the corresponding arrow key.</p></div>',
-		'<div class = centerbox><p class = block-text>Before the square appears, a *, &larr;, or &rarr; will come up somewhere on the screen.</p><p class=block-text>Irrespective of where they appear, it is important that you respond as quickly and accurately as possible by pressing the arrow key corresponding to the location of the square.</p><p class=block-text>After you click <b>End Instructions</b> we will start with practice. During practice you will receive feedback about whether your responses are correct. You will not receive feedback during the rest of the experiment.</p></div>'
+		'<div class = centerbox><p class = block-text>Before the &#9632 appears, a *, &larr;, or &rarr; will come up somewhere on the screen.  The arrows (&larr; and &rarr;) predict where square will appear.  Ignore the * as it makes detecting the square more difficult.</p><p class=block-text>Irrespective of where the *, &larr;, or &rarr; appear, it is important that you respond as quickly and accurately as possible by pressing the arrow key corresponding to the location of &#9632.</p></div>',
+		'<div class = centerbox><p class = block-text><b><em>Try to let go of any thoughts or feelings that you notice which are not related to the task.  This should induce a meditative state which will improve your speed and accuracy.</em></b></p><p class=block-text>After you click <b>End Instructions</b> we will start with practice. During practice you will receive feedback about whether your responses are correct. You will not receive feedback during the rest of the experiment.</p></div>'
 	],
 	allow_keys: false,
 	data: {
@@ -271,13 +276,14 @@ var fixation = {
 	type: 'poldrack-single-stim',
 	stimulus: '<div class=centerbox><div class=orienting_text>+</div></div>',
 	is_html: true,
-	choices: 'none',
+	choices: Object.values(choices),
 	data: {
 		trial_id: 'fixation'
 	},
 	timing_post_trial: 0,
 	timing_stim: fixation_ms,
 	timing_response: fixation_ms,
+	response_ends_trial: false,
 	on_finish: function() {
 		jsPsych.data.addDataToLastTrial({
 			exp_stage: exp_stage
@@ -285,18 +291,20 @@ var fixation = {
 	}
 }
 
+// FIXME: Cues _detect_ anticipatory responses, but don't test their accuracy.  This would need a 'correct_response' attribute on cue data as per stimuli.
 
 var center_cue = {
 	type: 'poldrack-single-stim',
 	stimulus: '<div class=centerbox><div class=orienting_centercue_text>*</div></div>',
 	is_html: true,
-	choices: 'none',
+	choices: Object.values(choices),
 	data: {
 		trial_id: 'centercue'
 	},
 	timing_post_trial: 0,
-	timing_stim: cue_ms	,
-	timing_response: cue_ms,
+	timing_stim: asterisk_cue_ms,
+	timing_response: asterisk_cue_ms,
+	response_ends_trial: false,
 	on_finish: function() {
 		jsPsych.data.addDataToLastTrial({
 			exp_stage: exp_stage
@@ -307,13 +315,14 @@ var center_left_cue = {
 	type: 'poldrack-single-stim',
 	stimulus: '<div class=centerbox><div class=orienting_centercue_text>&larr;</div></div>',
 	is_html: true,
-	choices: 'none',
+	choices: Object.values(choices),
 	data: {
 		trial_id: 'centerleftcue'
 	},
 	timing_post_trial: 0,
-	timing_stim: cue_ms,
-	timing_response: cue_ms,
+	timing_stim: arrow_cue_ms,
+	timing_response: arrow_cue_ms,
+	response_ends_trial: false,
 	on_finish: function() {
 		jsPsych.data.addDataToLastTrial({
 			exp_stage: exp_stage
@@ -324,13 +333,52 @@ var center_right_cue = {
 	type: 'poldrack-single-stim',
 	stimulus: '<div class=centerbox><div class=orienting_centercue_text>&rarr;</div></div>',
 	is_html: true,
-	choices: 'none',
+	choices: Object.values(choices),
 	data: {
 		trial_id: 'centerrightcue'
 	},
 	timing_post_trial: 0,
-	timing_stim: cue_ms,
-	timing_response: cue_ms,
+	timing_stim: arrow_cue_ms,
+	timing_response: arrow_cue_ms,
+	response_ends_trial: false,
+	on_finish: function() {
+		jsPsych.data.addDataToLastTrial({
+			exp_stage: exp_stage
+		})
+	}
+}
+var spatial_left_cue = {
+	type: 'poldrack-single-stim',
+	stimulus: '<div class=centerbox><div class=orienting_text>+</div></div><div class=centerbox><div class=orienting_left' + 
+				'><div class=orienting_text>*</div></div></div>',
+	is_html: true,
+	choices: Object.values(choices),
+	data: {
+		trial_id: 'spatialleftcue'
+	},
+	timing_post_trial: 0,
+	timing_stim: asterisk_cue_ms,
+	timing_response: asterisk_cue_ms,
+	response_ends_trial: false,
+	on_finish: function() {
+		jsPsych.data.addDataToLastTrial({
+			exp_stage: exp_stage
+		})
+	}
+}
+var spatial_right_cue = {
+	type: 'poldrack-single-stim',
+	stimulus: '<div class=centerbox><div class=orienting_text>+</div></div><div class=centerbox><div class=orienting_right' + 
+				'><div class=orienting_text>*</div></div></div>',
+	is_html: true,
+	choices: Object.values(choices),
+	data: {
+		trial_id: 'spatialrightcue'
+	},
+	timing_post_trial: 0,
+	timing_stim: asterisk_cue_ms,
+	timing_response: asterisk_cue_ms,
+	response_ends_trial: false,
 	on_finish: function() {
 		jsPsych.data.addDataToLastTrial({
 			exp_stage: exp_stage
@@ -369,23 +417,10 @@ for (i = 0; i < block.data.length; i++) {
 		attention_orienting_experiment.push(center_left_cue)
 	} else if (block.data[i].cue == 'centerright') {
 		attention_orienting_experiment.push(center_right_cue)
-	} else {
-		var spatial_cue = {
-			type: 'poldrack-single-stim',
-			stimulus: '<div class=centerbox><div class=orienting_text>+</div></div><div class=centerbox><div class=orienting_' + block.data[i].location +
-				'><div class=orienting_text>*</div></div></div>',
-			is_html: true,
-			choices: 'none',
-			data: {
-				trial_id: 'spatialcue',
-				exp_stage: 'practice',
-				location: block.data[i].location,
-			},
-			timing_post_trial: 0,
-			timing_stim: cue_ms,
-			timing_response: cue_ms
-		}
-		attention_orienting_experiment.push(spatial_cue)
+	} else if (block.data[i].cue == 'spatialleft') {
+		attention_orienting_experiment.push(spatial_left_cue)
+	} else if (block.data[i].cue == 'spatialright') {
+		attention_orienting_experiment.push(spatial_right_cue)
 	}
 
 	attention_orienting_experiment.push(fixation)
@@ -463,24 +498,12 @@ for (b = 0; b < blocks.length; b++) {
 			attention_orienting_experiment.push(center_left_cue)
 		} else if (block.data[i].cue == 'centerright') {
 			attention_orienting_experiment.push(center_right_cue)
-		} else {	
-			var spatial_cue = {
-				type: 'poldrack-single-stim',
-				stimulus: '<div class = centerbox><div class=orienting_text>+</div></div><div class=centerbox><div class=orienting_' + block.data[i].location +
-					'><div class=orienting_text>*</p></div></div>',
-				is_html: true,
-				choices: 'none',
-				data: {
-					trial_id: "spatialcue",
-					location: block.data[i].location,
-					exp_stage: 'test',
-				},
-				timing_post_trial: 0,
-				timing_stim: cue_ms,
-				timing_response: cue_ms
-			}
-			attention_orienting_experiment.push(spatial_cue)
+		} else if (block.data[i].cue == 'spatialleft') {
+			attention_orienting_experiment.push(spatial_left_cue)
+		} else if (block.data[i].cue == 'spatialright') {
+			attention_orienting_experiment.push(spatial_right_cue)
 		}
+
 		attention_orienting_experiment.push(fixation)
 
 		block.data[i].trial_num = trial_num
